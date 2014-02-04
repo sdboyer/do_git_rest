@@ -16,6 +16,49 @@ type User struct {
 	HasRole     bool
 }
 
+type userdata struct {
+	per_label     []string `json: per-label`
+	branch_delete string   // stupid php, converting ints to strings from db
+	pass          string
+	global        int
+	uid           string // ibid. string, but actually int
+	access        string // string, but actually int
+	name          string
+	tag_delete    string // string, but actually int
+	tag_create    string // string, but actually int
+	branch_create string // string, but actually int
+	ssh_keys      map[string]string
+	tag_update    string // string, but actually int
+	branch_update string // string, but actually int
+	repo_id       string // string, but actually int
+}
+
+func defaultUserdata() *userdata {
+	u := &userdata{
+		per_label:     []string{},
+		branch_delete: "0",
+		global:        0, // TODO check what this is in reference to
+		access:        "2",
+		tag_delete:    "0",
+		tag_create:    "0",
+		branch_create: "0",
+		tag_update:    "0",
+		branch_update: "0",
+	}
+	return u
+}
+
+type project struct {
+	project          string
+	project_nid      int
+	repository_name  string
+	repo_id          string // string, but actually int
+	repo_group       int
+	status           int
+	protected_labels map[string][]string
+	users            map[string]userdata
+}
+
 var users = []*User{
 	&User{"normal_git", "ABCDEFGHIJKLMN", "arglebargle", true},
 }
@@ -33,6 +76,7 @@ func main() {
 	m.Get("/drupalorg/drupalorg-vcs-auth-check-user-pass", CheckPasswordForUser)
 	m.Get("/drupalorg/drupalorg-vcs-auth-fetch-user-hash", FetchUserPassHash)
 	m.Get("/drupalorg/pushctl-state", func() string { return pushCtl })
+	//m.Get("/drupalorg/vcs-auth-data", VcsAuthData)
 
 	m.Run()
 }
