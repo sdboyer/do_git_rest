@@ -56,73 +56,73 @@ type Project struct {
 
 func (p *Project) MarshalJSON() ([]byte, error) {
 	mp := project{
-		project:         p.ProjectName,
-		project_nid:     strconv.Itoa(p.ProjectId),
-		repository_name: p.RepoName,
-		repo_id:         strconv.Itoa(p.RepoId),
-		repo_group:      p.Type,
-		status:          p.Status,
-		protected_labels: map[string][]string{
+		Project:         p.ProjectName,
+		Project_nid:     strconv.Itoa(p.ProjectId),
+		Repository_name: p.RepoName,
+		Repo_id:         strconv.Itoa(p.RepoId),
+		Repo_group:      p.Type,
+		Status:          p.Status,
+		Protected_labels: map[string][]string{
 			"branches": p.ProtectedBranches,
 			"tags":     p.ProtectedTags,
 		},
-		users: make(map[string]*userdata),
+		Users: make(map[string]*userdata),
 	}
 
 	for _, user := range p.Users {
 		u := defaultUserdata()
-		u.pass = user.Password
-		u.global = user.Blocked
-		u.uid = strconv.Itoa(user.Uid)
-		u.name = user.Username
-		u.ssh_keys = user.Fingerprints
-		mp.users[user.Username] = u
+		u.Pass = user.Password
+		u.Global = user.Blocked
+		u.Uid = strconv.Itoa(user.Uid)
+		u.Name = user.Username
+		u.Ssh_keys = user.Fingerprints
+		mp.Users[user.Username] = u
 	}
 
 	return json.Marshal(mp)
 }
 
 type userdata struct {
-	per_label     []string `json: per-label`
-	branch_delete string   // stupid php, converting ints to strings from db
-	pass          string
-	global        int
-	uid           string // ibid. string, but actually int
-	access        string // string, but actually int
-	name          string
-	tag_delete    string // string, but actually int
-	tag_create    string // string, but actually int
-	branch_create string // string, but actually int
-	ssh_keys      map[string]string
-	tag_update    string // string, but actually int
-	branch_update string // string, but actually int
-	repo_id       string // string, but actually int
+	Per_label     []string          `json:"per-label"`
+	Branch_delete string            `json:"branch_delete"` // stupid php, converting ints to strings from db
+	Pass          string            `json:"pass"`
+	Global        int               `json:"global"`
+	Uid           string            `json:"uid"`    // ibid. string, but actually int
+	Access        string            `json:"access"` // string, but actually int
+	Name          string            `json:"name"`
+	Tag_delete    string            `json:"tag_delete"`    // string, but actually int
+	Tag_create    string            `json:"tag_create"`    // string, but actually int
+	Branch_create string            `json:"branch_create"` // string, but actually int
+	Ssh_keys      map[string]string `json:"ssh_keys"`
+	Tag_update    string            `json:"tag_update"`    // string, but actually int
+	Branch_update string            `json:"branch_update"` // string, but actually int
+	Repo_id       string            `json:"repo_id"`       // string, but actually int
 }
 
 func defaultUserdata() *userdata {
 	u := &userdata{
-		per_label:     []string{},
-		branch_delete: "0",
-		global:        0, // TODO check what this is in reference to
-		access:        "2",
-		tag_delete:    "0",
-		tag_create:    "0",
-		branch_create: "0",
-		tag_update:    "0",
-		branch_update: "0",
+		Per_label:     []string{},
+		Branch_delete: "0",
+		Global:        0, // TODO check what this is in reference to
+		Access:        "2",
+		Tag_delete:    "0",
+		Tag_create:    "0",
+		Branch_create: "0",
+		Tag_update:    "0",
+		Branch_update: "0",
 	}
 	return u
 }
 
 type project struct {
-	project          string
-	project_nid      string // string, but actually int
-	repository_name  string
-	repo_id          string // string, but actually int
-	repo_group       int
-	status           int
-	protected_labels map[string][]string
-	users            map[string]*userdata
+	Project          string               `json:"project"`
+	Project_nid      string               `json:"project_nid"` // string, but actually int
+	Repository_name  string               `json:"repository_name"`
+	Repo_id          string               `json:"repo_id"` // string, but actually int
+	Repo_group       int                  `json:"repo_group"`
+	Status           int                  `json:"status"`
+	Protected_labels map[string][]string  `json:"protected_labels"`
+	Users            map[string]*userdata `json:"users"`
 }
 
 var users = map[string]*User{
@@ -178,7 +178,7 @@ var projects = []*Project{
 		Type:              DRUPALORG_GIT_GATECTL_PROJECTS,
 		ProtectedTags:     []string{"7.x-1.0"},
 		ProtectedBranches: []string{"7.x-1.x"},
-		Users:             []*User{users["normal"]},
+		Users:             []*User{users["normal"], users["missing_role"]},
 	},
 }
 
