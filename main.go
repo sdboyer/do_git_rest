@@ -7,6 +7,7 @@ import (
 	"flag"
 	"github.com/codegangsta/martini"
 	"net/http"
+	"strconv"
 )
 
 const (
@@ -16,8 +17,16 @@ const (
 	DRUPALORG_GIT_AUTH_ACCOUNT_BLOCKED
 )
 
+// ugh that this is a bitfield, there is no reason for it to be.
+const (
+	DRUPALORG_GIT_GATECTL_CORE = 1 << iota
+	DRUPALORG_GIT_GATECTL_PROJECTS
+	DRUPALORG_GIT_GATECTL_SANDBOXES
+)
+
 type User struct {
 	Username     string
+	Uid          int
 	Fingerprints map[string]string
 	Password     string
 	Blocked      int
@@ -38,10 +47,39 @@ type Project struct {
 	RepoName          string
 	ProjectId         int
 	ProjectName       string
-	Status            bool
+	Status            int
+	Type              int
 	ProtectedTags     []string
 	ProtectedBranches []string
 	Users             []*User
+}
+
+func (p *Project) MarshalJSON() ([]byte, error) {
+	mp := project{
+		project:         p.ProjectName,
+		project_nid:     strconv.Itoa(p.ProjectId),
+		repository_name: p.RepoName,
+		repo_id:         strconv.Itoa(p.RepoId),
+		repo_group:      p.Type,
+		status:          p.Status,
+		protected_labels: map[string][]string{
+			"branches": p.ProtectedBranches,
+			"tags":     p.ProtectedTags,
+		},
+		users: make(map[string]*userdata),
+	}
+
+	for _, user := range p.Users {
+		u := defaultUserdata()
+		u.pass = user.Password
+		u.global = user.Blocked
+		u.uid = strconv.Itoa(user.Uid)
+		u.name = user.Username
+		u.ssh_keys = user.Fingerprints
+		mp.users[user.Username] = u
+	}
+
+	return json.Marshal(mp)
 }
 
 type userdata struct {
@@ -84,7 +122,7 @@ type project struct {
 	repo_group       int
 	status           int
 	protected_labels map[string][]string
-	users            map[string]userdata
+	users            map[string]*userdata
 }
 
 var users = map[string]*User{
@@ -133,10 +171,11 @@ var users = map[string]*User{
 var projects = []*Project{
 	&Project{
 		RepoId:            1,
-		RepoName:          "Repo 1",
+		RepoName:          "repo1",
 		ProjectId:         1,
 		ProjectName:       "Project 1",
-		Status:            true,
+		Status:            1,
+		Type:              DRUPALORG_GIT_GATECTL_PROJECTS,
 		ProtectedTags:     []string{"7.x-1.0"},
 		ProtectedBranches: []string{"7.x-1.x"},
 		Users:             []*User{users["normal"]},
@@ -156,7 +195,7 @@ func main() {
 	m.Get("/drupalorg/drupalorg-vcs-auth-check-user-pass", CheckPasswordForUser)
 	m.Get("/drupalorg/drupalorg-vcs-auth-fetch-user-hash", FetchUserPassHash)
 	m.Get("/drupalorg/pushctl-state", func() string { return pushCtl })
-	//m.Get("/drupalorg/vcs-auth-data", VcsAuthData)
+	m.Get("/drupalorg/vcs-auth-data", VcsAuthData)
 
 	m.Run()
 }
@@ -176,6 +215,16 @@ func findUserByFingerprint(fingerprint string) *User {
 			}
 		}
 	}
+	return nil
+}
+
+func findProjectByRepoName(name string) *Project {
+	for _, project := range projects {
+		if project.RepoName == name {
+			return project
+		}
+	}
+
 	return nil
 }
 
@@ -256,4 +305,23 @@ func FetchUserPassHash(req *http.Request) (resp string) {
 	}
 
 	return
+}
+
+func VcsAuthData(req *http.Request) []byte {
+	q := req.URL.Query()
+
+	pi, pie := q["project_uri"]
+	if !pie {
+		return []byte{}
+	}
+
+	if project := findProjectByRepoName(pi[0]); project != nil {
+		json, err := json.Marshal(project)
+		if err != nil {
+			panic("error encoding project json")
+		}
+		return json
+	}
+
+	return []byte{}
 }
