@@ -88,13 +88,45 @@ type project struct {
 }
 
 var users = map[string]*User{
-	"normal_git": &User{
+	"normal": &User{
 		Username: "normal_git",
 		Fingerprints: map[string]string{
 			"primary": "ABCDEFGHIJKLMN", // TODO make this real
 		},
 		Password: "arglebargle", // TODO make this real
 		Blocked:  0,
+	},
+	"missing_role": &User{
+		Username: "missing_role",
+		Fingerprints: map[string]string{
+			"primary": "ABCDEFGHIJKLMN", // TODO make this real
+		},
+		Password: "higgledypiggledy",
+		Blocked:  DRUPALORG_GIT_AUTH_NO_ROLE,
+	},
+	"suspended": &User{
+		Username: "suspended",
+		Fingerprints: map[string]string{
+			"primary": "ABCDEFGHIJKLMN", // TODO make this real
+		},
+		Password: "smellyface",
+		Blocked:  DRUPALORG_GIT_AUTH_NO_ROLE | DRUPALORG_GIT_AUTH_ACCOUNT_SUSPENDED,
+	},
+	"not_consented": &User{
+		Username: "not_consented",
+		Fingerprints: map[string]string{
+			"primary": "ABCDEFGHIJKLMN", // TODO make this real
+		},
+		Password: "downunder",
+		Blocked:  DRUPALORG_GIT_AUTH_NO_ROLE | DRUPALORG_GIT_AUTH_NOT_CONSENTED,
+	},
+	"blocked": &User{
+		Username: "not_consented",
+		Fingerprints: map[string]string{
+			"primary": "ABCDEFGHIJKLMN", // TODO make this real
+		},
+		Password: "waytobraybob",
+		Blocked:  DRUPALORG_GIT_AUTH_ACCOUNT_BLOCKED,
 	},
 }
 
@@ -107,6 +139,7 @@ var projects = []*Project{
 		Status:            true,
 		ProtectedTags:     []string{"7.x-1.0"},
 		ProtectedBranches: []string{"7.x-1.x"},
+		Users:             []*User{users["normal"]},
 	},
 }
 
