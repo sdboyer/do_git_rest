@@ -10,10 +10,20 @@ import (
 )
 
 type User struct {
-	Username    string
-	Fingerprint string
-	Password    string
-	HasRole     bool
+	Username     string
+	Fingerprints map[string]string
+	Password     string
+	Blocked      int
+}
+
+func (u *User) HasFingerprint(fingerprint string) bool {
+	for _, fp := range u.Fingerprints {
+		if fp == fingerprint {
+			return true
+		}
+	}
+
+	return false
 }
 
 type Project struct {
@@ -104,18 +114,18 @@ func main() {
 }
 
 func findUserByUsername(name string) *User {
-	for _, user := range users {
-		if user.Username == name {
-			return user
-		}
+	if user, exists := users[name]; exists {
+		return user
 	}
 	return nil
 }
 
-func findUserByFingerprint(name string) *User {
+func findUserByFingerprint(fingerprint string) *User {
 	for _, user := range users {
-		if user.Fingerprint == name {
-			return user
+		for _, fp := range user.Fingerprints {
+			if fp == fingerprint {
+				return user
+			}
 		}
 	}
 	return nil
@@ -133,7 +143,7 @@ func CheckFingerprintForUser(req *http.Request) (resp string) {
 	}
 
 	if user := findUserByUsername(u[0]); user != nil {
-		if user.Fingerprint == f[0] {
+		if user.HasFingerprint(f[0]) {
 			resp = "true"
 		}
 	}
