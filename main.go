@@ -9,6 +9,13 @@ import (
 	"net/http"
 )
 
+const (
+	DRUPALORG_GIT_AUTH_NO_ROLE = 1 << iota
+	DRUPALORG_GIT_AUTH_ACCOUNT_SUSPENDED
+	DRUPALORG_GIT_AUTH_NOT_CONSENTED
+	DRUPALORG_GIT_AUTH_ACCOUNT_BLOCKED
+)
+
 type User struct {
 	Username     string
 	Fingerprints map[string]string
@@ -34,6 +41,7 @@ type Project struct {
 	Status            bool
 	ProtectedTags     []string
 	ProtectedBranches []string
+	Users             []*User
 }
 
 type userdata struct {
@@ -79,8 +87,15 @@ type project struct {
 	users            map[string]userdata
 }
 
-var users = []*User{
-	&User{"normal_git", "ABCDEFGHIJKLMN", "arglebargle", true},
+var users = map[string]*User{
+	"normal_git": &User{
+		Username: "normal_git",
+		Fingerprints: map[string]string{
+			"primary": "ABCDEFGHIJKLMN", // TODO make this real
+		},
+		Password: "arglebargle", // TODO make this real
+		Blocked:  0,
+	},
 }
 
 var projects = []*Project{
