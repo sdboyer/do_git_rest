@@ -185,19 +185,28 @@ var projects = []*Project{
 var pushCtl string
 
 func main() {
-	m := martini.Classic()
+	BuildServer().Run()
+}
+
+func BuildServer() *martini.Martini {
+	m := martini.New()
+	m.Use(martini.Recovery())
+	m.Use(martini.Logger())
 
 	flag.StringVar(&pushCtl, "pushctl", "0", "Sets the pushctl state for the REST server.")
 	flag.Parse()
 
-	m.Get("/drupalorg/drupalorg-ssh-user-key", CheckFingerprintForUser)
-	m.Get("/drupalorg/drupalorg-sshkey-check", VerifySshKey)
-	m.Get("/drupalorg/drupalorg-vcs-auth-check-user-pass", CheckPasswordForUser)
-	m.Get("/drupalorg/drupalorg-vcs-auth-fetch-user-hash", FetchUserPassHash)
-	m.Get("/drupalorg/pushctl-state", func() string { return pushCtl })
-	m.Get("/drupalorg/vcs-auth-data", VcsAuthData)
+	r := martini.NewRouter()
+	r.Get("/drupalorg/drupalorg-ssh-user-key", CheckFingerprintForUser)
+	r.Get("/drupalorg/drupalorg-sshkey-check", VerifySshKey)
+	r.Get("/drupalorg/drupalorg-vcs-auth-check-user-pass", CheckPasswordForUser)
+	r.Get("/drupalorg/drupalorg-vcs-auth-fetch-user-hash", FetchUserPassHash)
+	r.Get("/drupalorg/pushctl-state", func() string { return pushCtl })
+	r.Get("/drupalorg/vcs-auth-data", VcsAuthData)
 
-	m.Run()
+	m.Action(r.Handle)
+
+	return m
 }
 
 func findUserByUsername(name string) *User {
