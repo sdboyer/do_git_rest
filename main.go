@@ -3,10 +3,9 @@
 package main
 
 import (
-	//"encoding/json"
+	"encoding/json"
 	"github.com/codegangsta/martini"
 	"net/http"
-	//	"net/url"
 )
 
 type User struct {
@@ -26,6 +25,7 @@ func main() {
 	m.Get("/drupalorg/drupalorg-ssh-user-key", CheckFingerprintForUser)
 	m.Get("/drupalorg/drupalorg-sshkey-check", VerifySshKey)
 	m.Get("/drupalorg/drupalorg-vcs-auth-check-user-pass", CheckPasswordForUser)
+	m.Get("/drupalorg/drupalorg-vcs-auth-fetch-user-hash", FetchUserPassHash)
 
 	m.Run()
 }
@@ -101,6 +101,26 @@ func CheckPasswordForUser(req *http.Request) (resp string) {
 		// min length of 20. oh, and have proper hashed pws :(
 		if len(p[0]) >= pass_len && p[0][0:pass_len] == user.Password {
 			resp = "true"
+		}
+	}
+
+	return
+}
+
+func FetchUserPassHash(req *http.Request) (resp string) {
+	q := req.URL.Query()
+	resp = "false"
+
+	u, ue := q["username"]
+
+	if !ue {
+		return
+	}
+
+	if user := findUserByUsername(u[0]); user != nil {
+		json, err := json.Marshal(user.Password)
+		if err == nil {
+			resp = string(json[:])
 		}
 	}
 
