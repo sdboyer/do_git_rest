@@ -4,6 +4,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"github.com/codegangsta/martini"
 	"net/http"
 )
@@ -19,13 +20,19 @@ var users = []*User{
 	&User{"normal_git", "ABCDEFGHIJKLMN", "arglebargle", true},
 }
 
+var pushCtl string
+
 func main() {
 	m := martini.Classic()
+
+	flag.StringVar(&pushCtl, "pushctl", "0", "Sets the pushctl state for the REST server.")
+	flag.Parse()
 
 	m.Get("/drupalorg/drupalorg-ssh-user-key", CheckFingerprintForUser)
 	m.Get("/drupalorg/drupalorg-sshkey-check", VerifySshKey)
 	m.Get("/drupalorg/drupalorg-vcs-auth-check-user-pass", CheckPasswordForUser)
 	m.Get("/drupalorg/drupalorg-vcs-auth-fetch-user-hash", FetchUserPassHash)
+	m.Get("/drupalorg/pushctl-state", func() string { return pushCtl })
 
 	m.Run()
 }
