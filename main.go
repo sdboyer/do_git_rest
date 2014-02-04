@@ -16,6 +16,16 @@ type User struct {
 	HasRole     bool
 }
 
+type Project struct {
+	RepoId            int
+	RepoName          string
+	ProjectId         int
+	ProjectName       string
+	Status            bool
+	ProtectedTags     []string
+	ProtectedBranches []string
+}
+
 type userdata struct {
 	per_label     []string `json: per-label`
 	branch_delete string   // stupid php, converting ints to strings from db
@@ -50,7 +60,7 @@ func defaultUserdata() *userdata {
 
 type project struct {
 	project          string
-	project_nid      int
+	project_nid      string // string, but actually int
 	repository_name  string
 	repo_id          string // string, but actually int
 	repo_group       int
@@ -61,6 +71,18 @@ type project struct {
 
 var users = []*User{
 	&User{"normal_git", "ABCDEFGHIJKLMN", "arglebargle", true},
+}
+
+var projects = []*Project{
+	&Project{
+		RepoId:            1,
+		RepoName:          "Repo 1",
+		ProjectId:         1,
+		ProjectName:       "Project 1",
+		Status:            true,
+		ProtectedTags:     []string{"7.x-1.0"},
+		ProtectedBranches: []string{"7.x-1.x"},
+	},
 }
 
 var pushCtl string
