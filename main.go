@@ -127,7 +127,7 @@ type project struct {
 
 var users = map[string]*User{
 	"normal": &User{
-		Username: "normal_git",
+		Username: "normal",
 		Fingerprints: map[string]string{
 			"primary": "ABCDEFGHIJKLMN", // TODO make this real
 		},
