@@ -1,6 +1,10 @@
 package keys
 
-var Keydata = map[string][]byte{
+import (
+	"code.google.com/p/go.crypto/ssh"
+)
+
+var keydata = map[string][]byte{
 	"normal": []byte(`-----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEAqsn8MfHijloBv8cU8P4htGTRN+zOFpbbqLLc9gxkyVWql7op
 YaHKi7AvrJoaKmkdwdI+ftnKzxaUPgBYERa/HWWC61+myMKUBJVmmBHFbv8IW6d4
@@ -138,3 +142,17 @@ Vv5ouqv/J597OjLUcgA2fEJV3jT7wxyMEmcknD2s9dHqqGhh6BXXDoXPGX9IUVvz
 -----END RSA PRIVATE KEY-----`),
 }
 
+var Keydata map[string]ssh.Signer
+
+func init() {
+	Keydata = make(map[string]ssh.Signer)
+
+	for username, keytext := range keydata {
+		key, err := ssh.ParsePrivateKey(keytext)
+		if err != nil {
+			continue
+		}
+
+		Keydata[username] = key
+	}
+}
