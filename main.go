@@ -3,9 +3,11 @@
 package main
 
 import (
+	"code.google.com/p/go.crypto/ssh"
 	"encoding/json"
 	"flag"
 	"github.com/codegangsta/martini"
+	"github.com/sdboyer/do_git_rest/keys"
 	"net/http"
 	"strconv"
 )
@@ -27,6 +29,7 @@ const (
 type User struct {
 	Username     string
 	Uid          int
+	Keychain     map[string]ssh.Signer
 	Fingerprints map[string]string
 	Password     string
 	Blocked      int
@@ -125,43 +128,43 @@ type project struct {
 	Users            map[string]*userdata `json:"users"`
 }
 
-var users = map[string]*User{
+var Users = map[string]*User{
 	"normal": &User{
 		Username: "normal",
-		Fingerprints: map[string]string{
-			"primary": "ABCDEFGHIJKLMN", // TODO make this real
+		Keychain: map[string]ssh.Signer{
+			"primary": keys.Keydata["normal"],
 		},
-		Password: "arglebargle", // TODO make this real
+		Password: "arglebargle",
 		Blocked:  0,
 	},
 	"missing_role": &User{
 		Username: "missing_role",
-		Fingerprints: map[string]string{
-			"primary": "ABCDEFGHIJKLMN", // TODO make this real
+		Keychain: map[string]ssh.Signer{
+			"primary": keys.Keydata["missing_role"],
 		},
 		Password: "higgledypiggledy",
 		Blocked:  DRUPALORG_GIT_AUTH_NO_ROLE,
 	},
 	"suspended": &User{
 		Username: "suspended",
-		Fingerprints: map[string]string{
-			"primary": "ABCDEFGHIJKLMN", // TODO make this real
+		Keychain: map[string]ssh.Signer{
+			"primary": keys.Keydata["suspended"],
 		},
 		Password: "smellyface",
 		Blocked:  DRUPALORG_GIT_AUTH_NO_ROLE | DRUPALORG_GIT_AUTH_ACCOUNT_SUSPENDED,
 	},
 	"not_consented": &User{
 		Username: "not_consented",
-		Fingerprints: map[string]string{
-			"primary": "ABCDEFGHIJKLMN", // TODO make this real
+		Keychain: map[string]ssh.Signer{
+			"primary": keys.Keydata["not_consented"],
 		},
 		Password: "downunder",
 		Blocked:  DRUPALORG_GIT_AUTH_NO_ROLE | DRUPALORG_GIT_AUTH_NOT_CONSENTED,
 	},
 	"blocked": &User{
 		Username: "not_consented",
-		Fingerprints: map[string]string{
-			"primary": "ABCDEFGHIJKLMN", // TODO make this real
+		Keychain: map[string]ssh.Signer{
+			"primary": keys.Keydata["blocked"],
 		},
 		Password: "waytobraybob",
 		Blocked:  DRUPALORG_GIT_AUTH_ACCOUNT_BLOCKED,
@@ -178,7 +181,7 @@ var projects = []*Project{
 		Type:              DRUPALORG_GIT_GATECTL_PROJECTS,
 		ProtectedTags:     []string{"7.x-1.0"},
 		ProtectedBranches: []string{"7.x-1.x"},
-		Users:             []*User{users["normal"], users["missing_role"]},
+		Users:             []*User{Users["normal"], Users["missing_role"]},
 	},
 }
 
@@ -210,14 +213,14 @@ func BuildServer() *martini.Martini {
 }
 
 func findUserByUsername(name string) *User {
-	if user, exists := users[name]; exists {
+	if user, exists := Users[name]; exists {
 		return user
 	}
 	return nil
 }
 
 func findUserByFingerprint(fingerprint string) *User {
-	for _, user := range users {
+	for _, user := range Users {
 		for _, fp := range user.Fingerprints {
 			if fp == fingerprint {
 				return user
